@@ -1,0 +1,31 @@
+# ===== Black Widow / Gravitar on the Star Wars DDR chassis =====
+# Chassis: proven SW DDR renderer (960x720 geometry) + phosphor-persistence gate:
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/vector_fb_ddram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/present_gate.sv
+
+# BW/Gravitar game module + dependencies (one module runs both games):
+set_global_assignment -name VHDL_FILE rtl/pkg_bwidow.vhd
+set_global_assignment -name VHDL_FILE rtl/dpram.vhd
+set_global_assignment -name VHDL_FILE rtl/dpram2k.vhd
+set_global_assignment -name VHDL_FILE rtl/ram2k.vhd
+set_global_assignment -name VHDL_FILE rtl/ram_2k.vhd
+set_global_assignment -name VHDL_FILE rtl/pwmgen.vhd
+set_global_assignment -name VHDL_FILE rtl/noisegen.vhd
+set_global_assignment -name VHDL_FILE rtl/pokey.vhd
+set_global_assignment -name VHDL_FILE rtl/earom.vhd
+set_global_assignment -name VHDL_FILE rtl/vecrom.vhd
+set_global_assignment -name VHDL_FILE rtl/pgmrom.vhd
+set_global_assignment -name VHDL_FILE rtl/avg/vector_drawer.vhd
+set_global_assignment -name VHDL_FILE rtl/avg/avg.vhd
+set_global_assignment -name VHDL_FILE rtl/t65/T65_Pack.vhd
+set_global_assignment -name VHDL_FILE rtl/t65/T65_MCode.vhd
+set_global_assignment -name VHDL_FILE rtl/t65/T65_ALU.vhd
+set_global_assignment -name VHDL_FILE rtl/t65/T65.vhd
+set_global_assignment -name VHDL_FILE rtl/bwidow.vhd
+
+# BW/Gravitar graft wrapper (bwidow -> coord-map -> vector_fb_ddram + present_gate + 960x720 sync):
+set_global_assignment -name SYSTEMVERILOG_FILE rtl/bwidow_sw.sv
+
+# Top + constraints:
+set_global_assignment -name SYSTEMVERILOG_FILE "Arcade-StarWars.sv"
+set_global_assignment -name SDC_FILE "Arcade-StarWars.sdc"
