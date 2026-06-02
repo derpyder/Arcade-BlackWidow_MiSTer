@@ -90,13 +90,29 @@ Beyond the standard MiSTer video/scaler options:
 
 ## Credits & license
 
-- **Jeroen Domburg (Sprite_tm)** — the original Black Widow / Gravitar MiSTer game
-  logic and the behavioral Atari AVG this builds on.
-- **Videodr0me** — the Star Wars MiSTer port and the `vector_fb_ddram` DDR3 vector
-  framebuffer chassis this core is re-hosted onto.
-- The broader MiSTer / MAME communities — Atari vector hardware lineage, T65,
-  POKEY, EAROM, and reference models.
+This core stands on a lot of prior work. Attribution is taken from the source-file
+headers — please preserve it (these are the people whose code makes this run):
+
+- **Jeroen Domburg (Sprite_tm)** — the Black Widow / Gravitar game logic and the
+  behavioral Atari AVG vector generator: `bwidow.vhd`, `avg/avg.vhd`,
+  `avg/vector_drawer.vhd`, `pkg_bwidow.vhd`, `pgmrom.vhd`, `dpram*.vhd`, `earom.vhd`,
+  `filter.vhd`, `noisegen.vhd` — © 2012.
+- **Daniel Wallner** (with later work by **MikeJ**) — the **T65** 6502 CPU core
+  (`rtl/t65/`), © 2002, BSD-style license.
+- **MikeJ / fpgaarcade.com** — the **POKEY** sound chip (`pokey.vhd`), © 2004.
+- **Jim Gregory** and **Alan Steremberg** — the MiSTer **hi-score** (`hiscore.v`,
+  © 2021) and **pause** (`pause.v`, © 2021) modules.
+- **Videodr0me** — the **Star Wars MiSTer** port and the `vector_fb_ddram` DDR3
+  vector-framebuffer chassis this core is re-hosted onto.
+- **Alexey Melnikov (sorgelig)** and the MiSTer project — the MiSTer framework
+  (`sys/`), © 2017–2020.
+- The broader **MiSTer** and **MAME** communities — Atari AVG hardware lineage and
+  reference models.
+
+This re-host (the DDR-rasterizer graft + 960×720 fill + present-gate integration)
+is the only new work here; everything above is reused under its original license.
 
 Original code is **GPLv3** (see `COPYING`); third-party modules retain their own
-licenses (see file headers and `LICENSES`). Non-commercial, preservation-oriented,
-not affiliated with Atari. Black Widow © 1982 Atari; Gravitar © 1983 Atari.
+licenses (see each file's header and `LICENSES`). Non-commercial,
+preservation-oriented, not affiliated with Atari. Black Widow © 1982 Atari;
+Gravitar © 1983 Atari.
