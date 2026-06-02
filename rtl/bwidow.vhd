@@ -52,6 +52,10 @@ entity bwidow is
 		input_3        : in  std_logic_vector( 7 downto 0);
 		input_4        : in  std_logic_vector( 7 downto 0);
 
+		-- SPEED THROTTLE: OSD-selectable target frame rate (see throttle logic below).
+		-- Default "00" so the sim tb (which omits this port) still elaborates + is throttled.
+		game_speed     : in  std_logic_vector(1 downto 0) := "00";
+
 		dbg				 : out std_logic_vector(15 downto 0);
 		
 		-- HISCORE
@@ -101,6 +105,12 @@ architecture Behaviour of bwidow is
 	signal irqctr			: std_logic_vector(3 downto 0) := (others => '0');
 	signal intack_l		: std_logic;
 	signal service_btnst	: std_logic;
+	-- SPEED THROTTLE: frame-rate cap applied to the CPU-visible avg_halted.
+	signal avg_halted_cpu : std_logic;
+	signal frame_thresh   : integer range 0 to 524287;
+	signal throttle_cnt   : integer range 0 to 524287 := 0;
+	signal throttle_done  : std_logic := '1';   -- '1' before first VGGO so boot self-test isn't gated
+	signal avg_go_d       : std_logic := '0';
 begin
 	pokeya: pokey port map (
 		ADDR      => c_addr(3 downto 0),
@@ -244,6 +254,43 @@ begin
 	intack_l <= '0' when c_addr(15 downto 6)="1000100011" else '1';
 	avg_go <= '1' when c_addr(15 downto 6)="1000100001" else '0';
 	avg_rst <= '1' when c_addr(15 downto 6)="1000100010" else '0';
+
+	-- =======================================================================
+	-- SPEED THROTTLE (frame-rate cap)
+	-- BW paces its frame loop by polling avg_halted (latchin_c bit 6).  Our FPGA AVG
+	-- draws the whole vector list far faster than the real analog beam, so it reports
+	-- "halted" too early and the game free-runs faster than the real ~40-50 Hz (measured
+	-- ~56-79 Hz in sim).  Hold the CPU-visible halted bit LOW until at least frame_thresh
+	-- clk cycles have elapsed since VGGO (avg_go rising edge) -> a minimum frame period =
+	-- a frame-rate ceiling.  Slows the game UNIFORMLY without touching the (correct) master
+	-- clock or the difficulty curve.  clk = 12.096774 MHz.
+	-- The game waits for an integer number of ~4.07 ms interrupts AFTER the AVG halts, so the
+	-- achievable throttled rate is QUANTIZED to interrupt buckets: 4/5/6 IRQ = ~56/45/38 Hz
+	-- on-screen (incl. the ~1.7 ms post-halt CPU tail).  Floors are set mid-bucket so the bucket
+	-- is hit reliably; the OSD labels are the MEASURED on-screen rates.
+	with game_speed select frame_thresh <=
+		278226 when "00",   -- 6 IRQ -> ~38 Hz on-screen (floor 23.0 ms, mid-bucket: 22.0 jittered the 5/6 edge)  [default]
+		217742 when "01",   -- 5 IRQ -> ~45 Hz on-screen (floor 18.0 ms)
+		169355 when "10",   -- 4 IRQ -> ~57 Hz on-screen (floor 14.0 ms)
+		0      when others; -- "11" = Uncapped (56-79 Hz, original behavior)
+
+	process(clk) begin
+		if rising_edge(clk) then
+			avg_go_d <= avg_go;
+			if avg_go = '1' and avg_go_d = '0' then     -- VGGO rising edge = frame start
+				throttle_cnt  <= 0;
+				throttle_done <= '0';
+			elsif throttle_cnt >= frame_thresh then     -- min frame period reached
+				throttle_done <= '1';
+			else
+				throttle_cnt <= throttle_cnt + 1;
+			end if;
+		end if;
+	end process;
+	-- CPU sees "halted" only once the real AVG is done AND the min frame period has passed.
+	-- (Under heavy load, if the real AVG draw exceeds frame_thresh, the real halt dominates
+	--  and the rate sags below the cap -- same direction as real hardware.)
+	avg_halted_cpu <= avg_halted and throttle_done;
 	
 	process(clk) begin
 		if clk'EVENT and clk='1' then
@@ -291,7 +338,7 @@ begin
 	--latchin_a(3 downto 0)<=buttons(7 downto 4);
 	
 	latchin_c(7)<=cnt_3khz(8);
-	latchin_c(6)<=avg_halted;
+	latchin_c(6)<=avg_halted_cpu;   -- SPEED THROTTLE: frame-rate-capped halt (see throttle logic)
 	latchin_c(5 downto 0)<=input_0(5 downto 0);
 	latchin_b(7 downto 0)<=input_3(7 downto 0);
 	latchin_a(7 downto 0)<=input_4(7 downto 0);

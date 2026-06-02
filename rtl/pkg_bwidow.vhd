@@ -24,6 +24,16 @@ library ieee;
 
 package pkg_bwidow is
 
+-- ===================================================================================
+-- WU_AA : vector beam anti-aliasing master switch (shared by vector_drawer + avg).
+--   true  = 2-tap beam (bright core + 1 sub-pixel-weighted edge) -> smooth diagonals,
+--           ~2x pixel rate (axis-aligned segments skip the edge -> 1x).
+--   false = bit-identical to the proven integer accumulator drawer (1 px/step).
+-- 2-tap form is HW-confirmed flicker-free on Tempest (the 3-tap was not).
+-- See docs HOWTO-vector-AA-port.md (ported from starwars-videodr0me).
+-- ===================================================================================
+constant WU_AA : boolean := true;
+
 component bwidow is
   port(
 		reset_h   : in    std_logic;
@@ -239,7 +249,8 @@ component vector_drawer is
            draw : in  STD_LOGIC;
 			  done : out STD_LOGIC;
            xout : out  STD_LOGIC_VECTOR (9 downto 0);
-           yout : out  STD_LOGIC_VECTOR (9 downto 0)
+           yout : out  STD_LOGIC_VECTOR (9 downto 0);
+           aa_cover : out STD_LOGIC_VECTOR (4 downto 0)   -- WU beam coverage 0..31 (full=31 when WU_AA off)
 	 );
 end component;
 

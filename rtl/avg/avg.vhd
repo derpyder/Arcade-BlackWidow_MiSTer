@@ -92,6 +92,9 @@ architecture Behavioral of avg is
 	signal intensity: STD_LOGIC_VECTOR(7 downto 0);
 	signal intens_mod: STD_LOGIC_VECTOR(2 downto 0);
 	signal rgb: STD_LOGIC_VECTOR(2 downto 0);
+	signal aa_cover_sig: STD_LOGIC_VECTOR(4 downto 0);  -- WU beam coverage from the drawer (0..31)
+	signal eff_intens: STD_LOGIC_VECTOR(7 downto 0);    -- base (un-scaled) beam intensity
+	signal zmul: STD_LOGIC_VECTOR(12 downto 0);         -- eff_intens * aa_cover (8b * 5b)
 begin
 --	myvecram: vecram_filled port map ( --Use this to test the AVG with a static image.
 	myvecram: entity work.ram2k port map (
@@ -123,7 +126,8 @@ begin
 		draw => vec_draw,
 		done => vec_done,
 		xout => xout,
-		yout => yout
+		yout => yout,
+		aa_cover => aa_cover_sig
 	);
 	
 	process (clk) begin
@@ -319,8 +323,13 @@ begin
 	halted<='1' when state=ISHALTED else '0';
 	
 	--idiotic scheme for the intensity... thanks to the mame source for this line.
-	zout<=intensity when intens_mod="001" else intens_mod&"00000";
-	
+	eff_intens <= intensity when intens_mod="001" else intens_mod&"00000";
+	-- WU AA: scale the beam intensity by the per-tap coverage (aa_cover/32).  The core
+	-- tap stays ~full so the line is never faint; the edge fades with the sub-pixel
+	-- position => anti-aliasing.  WU_AA off -> zout = eff_intens (bit-identical).
+	zmul <= eff_intens * aa_cover_sig;          -- 8b * 5b = 13b
+	zout <= zmul(12 downto 5) when WU_AA else eff_intens;   -- >>5 (/32)
+
 	rgbout <= rgb;
 end Behavioral;
 

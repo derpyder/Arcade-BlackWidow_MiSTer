@@ -250,7 +250,7 @@ end
 // status bits, so OSD knobs never collide with gameplay DIPs):
 //   [0]=Reset  [2]=RasterFlicker  [6:5]=Rotate  [7]=Mirror  [9:8]=VectorScale
 //   [10]=FrameGate(bypass)  [11]=Fire mode(BW twin-stick)  [15:14]=Aspect
-//   [25]=120Hz  [27]=AutosaveHi  [29:28]=Persistence
+//   [13:12]=GameSpeed  [25]=120Hz  [27]=AutosaveHi  [29:28]=Persistence
 localparam CONF_STR = {
 	"A.BWIDOW;;",
 	"-;",
@@ -261,6 +261,7 @@ localparam CONF_STR = {
 	"O7,Mirror,Off,On;",
 	"OA,Frame Gate,On,Off;",
 	"OST,Persistence,3 (default),4,6,2;",
+	"OCD,Game Speed,38Hz (default),45Hz,57Hz,Uncapped;",
 	"-;",
 	"h1OB,Fire,Buttons,Second Joystick;",
 	"-;",
@@ -422,6 +423,7 @@ bwidow_sw bwidow_core
 	.osd_scale(status[9:8]),       // 0=Half (safe), 1=ThreeQ, 2=Full
 	.osd_gate_bypass(status[10]),
 	.osd_persist(status[29:28]),   // 0=3(default ~_n),1=4,2=6,3=2 lists/frame
+	.osd_game_speed(status[13:12]),// SPEED THROTTLE: 0=38Hz(default) 1=45Hz 2=57Hz 3=Uncapped (on-screen, sim-measured)
 
 	// DDRAM Framebuffer Interface (proven SW DDR renderer)
 	.DDRAM_CLK(DDRAM_CLK),

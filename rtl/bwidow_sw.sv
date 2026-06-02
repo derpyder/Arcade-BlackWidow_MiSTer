@@ -38,6 +38,7 @@ module bwidow_sw (
 	input  [1:0]  osd_scale,        //             0=/2 (safe), 1=x3/4, 2=x1
 	input         osd_gate_bypass,  //             1 = bypass the gate (native passthrough)
 	input  [1:0]  osd_persist,      // vector persistence: lists accumulated/buffer
+	input  [1:0]  osd_game_speed,   // SPEED THROTTLE: 0=38Hz(default) 1=45Hz 2=57Hz 3=Uncapped (on-screen)
 
 	// DDRAM framebuffer (straight pass-through to the emu module)
 	output        DDRAM_CLK,
@@ -131,6 +132,7 @@ module bwidow_sw (
 		.input_0(input_0),
 		.input_3(input_3),
 		.input_4(input_4),
+		.game_speed(osd_game_speed),   // SPEED THROTTLE select (frame-rate cap)
 		.dbg(tmp_dbg),
 		.hs_address(hs_address),
 		.hs_data_out(hs_data_out),
