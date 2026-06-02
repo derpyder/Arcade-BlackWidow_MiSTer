@@ -149,16 +149,22 @@ module bwidow_sw (
 	wire [9:0]  cx = {~tmp_x[9], tmp_x[8:0]};        // BW coords, centred 0..1023 (Tempest convention)
 	wire [9:0]  cy = {~tmp_y[9], tmp_y[8:0]};
 
-	// FILL scale = 11/16 (0.6875), same as the shipped tempest_sw: maps the FULL 1024 coord span
-	// to 704px (1024*11/16 = 704 <= the 720 FB height) -> fills ~98% of the screen height and
-	// CANNOT clip vertically (704 < 720).  The BW attract uses the whole 1024^2 field (capture:
-	// ax 0..1021 / ay 2..1021), so this fills the screen; the old /2 Half left a ~512 letterbox.
-	// osd_scale is PINNED to FILL (no OSD Vector Scale line); the port stays for interface parity.
-	wire [13:0] cxs  = cx * 4'd11;                    // cx * 11
-	wire [13:0] cys  = cy * 4'd11;
-	wire [9:0]  sx   = cxs[13:4];                      // >>4  (= *11/16)
+	// FILL scale = 13/16 (0.8125).  SCALE HISTORY (measured, not guessed):
+	//  - 11/16 under-filled (HW: ~67%V) -- the original assumed BW used the full 1024^2 field; it
+	//    doesn't (lit content is centred, ~700 units).
+	//  - 15/16 filled the ATTRACT (92%V) but CLIPPED GAMEPLAY on HW -- gameplay geometry (arena
+	//    border) is TALLER than the attract: at 15/16 the gameplay capture ran 330 pts off-top +
+	//    793 pts off-bottom (fy -32..773, real border points, not strays).
+	//  - 13/16 contains the GAMEPLAY extent (the binding case): gameplay fy ~20..718 in-bounds,
+	//    attract ~80%V.  This is the smallest clean step that fits gameplay top+bottom.  The
+	//    capture is the worst frame seen; 13/16 is the calibrated fill for BW's 4:3 field.
+	// osd_scale is PINNED here (no OSD Vector Scale line); the port stays for interface parity.
+	// (Gravitar shares this scale -- it also clipped at 15/16; 13/16 brings it in too. Confirm on HW.)
+	wire [13:0] cxs  = cx * 4'd13;                    // cx * 13
+	wire [13:0] cys  = cy * 4'd13;
+	wire [9:0]  sx   = cxs[13:4];                      // >>4  (= *13/16)
 	wire [9:0]  sy   = cys[13:4];
-	wire [9:0]  half = 10'd352;                        // scaled centre = 512*11/16 = 352
+	wire [9:0]  half = 10'd416;                        // scaled centre = 512*13/16 = 416
 
 	wire signed [12:0] scx = $signed({3'b000, sx}) - $signed({3'b000, half});
 	wire signed [12:0] scy = $signed({3'b000, sy}) - $signed({3'b000, half});

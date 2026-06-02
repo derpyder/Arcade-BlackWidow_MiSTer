@@ -39,16 +39,16 @@ module tb_fb_replay;
 	function automatic int mapx(input int ax);
 		int cx, sx, scx, fxs;
 		cx  = ax ^ 512;          // {~ax[9], ax[8:0]} centre
-		sx  = (cx * 11) >> 4;    // FILL scale *11/16 (matches bwidow_sw)
-		scx = sx - 352;          // - half (512*11/16)
+		sx  = (cx * 13) >> 4;    // FILL scale *13/16 (matches bwidow_sw)
+		scx = sx - 416;          // - half (512*13/16 = 416)
 		fxs = 480 + scx;         // X not flipped, FB centre 480 (matches bwidow_sw fxs=480+rx; 960 wide)
 		return fxs;
 	endfunction
 	function automatic int mapy(input int ay);
 		int cy, sy, scy, fys;
 		cy  = ay ^ 512;
-		sy  = (cy * 11) >> 4;    // FILL scale *11/16 (matches bwidow_sw)
-		scy = sy - 352;
+		sy  = (cy * 13) >> 4;    // FILL scale *13/16 (matches bwidow_sw)
+		scy = sy - 416;          // - half (512*13/16 = 416)
 		fys = 360 - scy;         // orient C: flip Y (matches bwidow_sw fys=360-ry, FB 720)
 		return fys;
 	endfunction
